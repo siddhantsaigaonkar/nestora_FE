@@ -99,21 +99,24 @@
 
 "use client";
 
-import { Suspense, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "react-toastify";
 
-function LoginForm() {
-  const searchParams = useSearchParams();
-  const redirectTo = searchParams.get("redirect") || "/";
+export default function LoginClient() {
+  const router = useRouter();
 
-  const [formData, setFormData] = useState({
-    username: "",
-    password: "",
-  });
+  // ❗ DO NOT suspend this component
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect") ?? "/";
+
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    console.log("🔥 LOGIN CLICKED"); // <-- YOU MUST SEE THIS
 
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/login`, {
       method: "POST",
@@ -121,8 +124,10 @@ function LoginForm() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(formData),
+      body: JSON.stringify({ username, password }),
     });
+
+    console.log("🔥 RESPONSE RECEIVED", res.status);
 
     const data = await res.json();
 
@@ -136,45 +141,23 @@ function LoginForm() {
   };
 
   return (
-    <div style={{ padding: 20 }}>
-      <h1>Login</h1>
+    <form onSubmit={handleSubmit}>
+      <input
+        value={username}
+        onChange={(e) => setUsername(e.target.value)}
+        placeholder="username"
+        required
+      />
 
-      <form onSubmit={handleSubmit}>
-        <input
-          name="username"
-          placeholder="Username"
-          value={formData.username}
-          onChange={(e) =>
-            setFormData({ ...formData, username: e.target.value })
-          }
-          required
-        />
+      <input
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder="password"
+        required
+      />
 
-        <br />
-
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          value={formData.password}
-          onChange={(e) =>
-            setFormData({ ...formData, password: e.target.value })
-          }
-          required
-        />
-
-        <br />
-
-        <button type="submit">Login</button>
-      </form>
-    </div>
-  );
-}
-
-export default function LoginClient() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <LoginForm />
-    </Suspense>
+      <button type="submit">Login</button>
+    </form>
   );
 }
