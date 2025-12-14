@@ -128,17 +128,14 @@
 
 
 
-
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
 import { toast } from "react-toastify";
 
 export default function NewListingClient() {
   const router = useRouter();
-  const toastShown = useRef(false);
-  const [checkingAuth, setCheckingAuth] = useState(true);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -150,38 +147,7 @@ export default function NewListingClient() {
 
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
-
-  // Auth check
-  useEffect(() => {
-    async function checkAuth() {
-      try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/check-auth`,
-          {
-            credentials: "include",
-          }
-        );
-
-        if (res.status === 401) {
-          if (!toastShown.current) {
-            toastShown.current = true;
-            toast.error("You must login first");
-          }
-          router.push("/login?redirect=/NewListing");
-          return;
-        }
-
-        setCheckingAuth(false);
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    checkAuth();
-  }, [router]);
-
-  if (checkingAuth)
-    return <p className="text-center mt-10">Checking authentication...</p>;
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -191,7 +157,9 @@ export default function NewListingClient() {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) setImageFile(e.target.files[0]);
+    if (e.target.files && e.target.files[0]) {
+      setImageFile(e.target.files[0]);
+    }
   };
 
   const validate = () => {
@@ -222,6 +190,7 @@ export default function NewListingClient() {
     if (imageFile) fd.append("image", imageFile);
 
     try {
+      setLoading(true);
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/api/listings`,
         {
@@ -236,9 +205,11 @@ export default function NewListingClient() {
       if (!res.ok) throw new Error(data.message || "Failed to create listing");
 
       toast.success(data.message);
-      router.push("/");
+      router.push("/"); // Redirect to home after creating listing
     } catch (err: any) {
       toast.error(err.message || "Something went wrong");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -269,6 +240,7 @@ export default function NewListingClient() {
 
       <input
         name="price"
+        type="number"
         placeholder="Price"
         value={formData.price}
         onChange={handleChange}
@@ -293,7 +265,14 @@ export default function NewListingClient() {
 
       <input type="file" onChange={handleFileChange} />
 
-      <button className="bg-blue-600 text-white p-2 rounded">Submit</button>
+      <button
+        type="submit"
+        disabled={loading}
+        className="bg-blue-600 text-white p-2 rounded"
+      >
+        {loading ? "Submitting..." : "Submit"}
+      </button>
     </form>
   );
 }
+
