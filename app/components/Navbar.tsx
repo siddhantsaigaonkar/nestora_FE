@@ -36,6 +36,14 @@ export default function Navbar() {
     };
 
     checkAuth();
+
+
+      const handleStorage = () => {
+        checkAuth(); // refetch if localStorage changes
+      };
+
+      window.addEventListener("storage", handleStorage);
+      return () => window.removeEventListener("storage", handleStorage);
   }, []);
 
   // Logout handler
