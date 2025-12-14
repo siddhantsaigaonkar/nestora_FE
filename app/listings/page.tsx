@@ -3,6 +3,7 @@
 
 
 
+export const dynamic = "force-dynamic"; // add this at the top of your file
 
 import ListingCard from "../components/ListingCard";
 
@@ -22,7 +23,10 @@ type Listing = {
 };
 
 async function getListings(): Promise<Listing[]> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/listings`);
+  // const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/listings`);
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/listings`, {
+      cache: "no-store", // ensures fresh fetch at runtime
+    });
   const data = await res.json();
   return Array.isArray(data) ? data : data.listings || [];
 }
