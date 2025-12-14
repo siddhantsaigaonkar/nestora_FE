@@ -138,6 +138,11 @@ export default function LoginClient() {
         return;
       }
 
+      // 🔥 VERY IMPORTANT
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/check-auth`, {
+        credentials: "include",
+      });
+
       toast.success("Login successful");
       router.push(redirectTo);
     } catch (err) {
